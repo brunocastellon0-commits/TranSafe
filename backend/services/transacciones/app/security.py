@@ -9,5 +9,5 @@ from .config import settings # Importa la configuración
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login") 
 
 # Necesitaremos estos valores para decodificar el token en dependencies.py
-SECRET_KEY = settings.JWT_SECRET_KEY
-ALGORITHM = settings.JWT_ALGORITHM
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
