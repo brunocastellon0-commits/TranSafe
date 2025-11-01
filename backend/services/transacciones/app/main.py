@@ -9,10 +9,6 @@ from .database import engine
 from .routes.transaccion_routes import router as transaction_router
 # -----------------------------------
 
-# 1. Creación de Tablas en la Base de Datos
-# Esta línea ahora funcionará porque 'models' se importa correctamente
-# y 'models.py' define 'Base'.
-models.Base.metadata.create_all(bind=engine)
 
 # 2. Instancia de la Aplicación FastAPI
 app = FastAPI(

@@ -1,0 +1,85 @@
+
+services:
+  # --- 1. Bases de Datos ---
+  auth-db:
+    image: mysql:8.0
+    container_name: auth-db
+    environment:
+      # Lee las variables del archivo .env en la raíz
+      MYSQL_ROOT_PASSWORD: ${AUTH_DB_ROOT_PASSWORD} 
+      MYSQL_DATABASE: auth_transafe # Tu nombre de BD
+    ports:
+      - "3308:3306" # Mapea el puerto de tu PC al contenedor
+    volumes:
+      - auth-db-data:/var/lib/mysql # Persiste los datos
+
+  trans-db:
+    image: mysql:8.0
+    container_name: trans-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${TRANS_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: transaccion_transafe # Tu nombre de BD
+    ports:
+      - "3307:3306" # Usa el puerto 3307 en tu PC para evitar colisión
+    volumes:
+      - trans-db-data:/var/lib/mysql
+
+  # --- 2. Broker de Mensajería ---
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"  # Puerto de la aplicación
+      - "15672:15672" # Panel de administración web
+
+  # --- 3. Microservicios de Backend ---
+  auth_service:
+    build:
+      context: ./backend/services/auth # Ruta al Dockerfile
+      dockerfile: DockerFile
+    container_name: auth_service
+    env_file: ./backend/services/auth/.env # Carga el .env del servicio
+    environment:
+      # Inyecta los secretos desde el .env raíz
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - AUTH_DB_ROOT_PASSWORD=${AUTH_DB_ROOT_PASSWORD}
+    ports:
+      - "8000:8000" # Acceso en http://localhost:8000
+    depends_on:
+      - auth-db # No inicies hasta que la BD esté lista
+
+  transactions_service:
+    build:
+      context: ./backend/services/transacciones
+      dockerfile: DockerFile
+    container_name: transactions_service
+    env_file: ./backend/services/transacciones/.env
+    environment:
+      # Inyecta los secretos
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - TRANS_DB_ROOT_PASSWORD=${TRANS_DB_ROOT_PASSWORD}
+    ports:
+      - "8001:8001" # Acceso en http://localhost:8001
+    depends_on:
+      - trans-db
+      - rabbitmq
+
+  fraud_service:
+    build:
+      context: ./backend/services/fraud_service
+      dockerfile: DockerFile
+    container_name: fraud_service
+    env_file: ./backend/services/fraud_service/.env # Carga su .env con las URLs
+    depends_on:
+      - rabbitmq             # Debe esperar a RabbitMQ
+      - transactions_service # y al servicio que va a llamar
+
+
+# --- Volúmenes ---
+# Define los volúmenes para que los datos de la BD sobrevivan
+# si borras los contenedores.
+volumes:
+  auth-db-data:
+  trans-db-data:

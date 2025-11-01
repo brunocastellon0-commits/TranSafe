@@ -5,11 +5,15 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
     
-    # JWT
-    SECRET_KEY: str
+    # JWT (Nombres corregidos para coincidir con docker-compose)
+    SECRET_KEY: str 
     ALGORITHM: str = "HS256"
+    
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    
+    # RabbitMQ (Default corregido al nombre del servicio)
+    RABBITMQ_URL: str = "amqp://guest:guest@rabbitmq:5672/" 
     
     # App
     APP_NAME: str = "Transaccion Service"
