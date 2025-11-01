@@ -4,10 +4,9 @@ from enum import Enum
 
 # Estado basado en la Máquina de Estados Finitos (MEF) 
 class TransactionStatus(str, Enum):
-    PENDING = "PENDIENTE"
-    NORMAL = "NORMAL"
-    SUSPICIOUS = "SOSPECHOSA"
-    BLOCKED = "BLOQUEADA" # Estado final si una regla crítica falla
+    PENDING = "PENDING"      # ← Cambiado de "PENDIENTE"
+    APPROVED = "APPROVED"    # ← Cambiado de "NORMAL"
+    REJECTED = "REJECTED"    # ← Cambiado de "SOSPECHOSA"
 
 class TransactionBase(BaseModel):
     # Campos requeridos por las reglas de negocio 
@@ -28,3 +27,7 @@ class TransactionInDBBase(TransactionBase):
 
     class Config:
         from_attributes = True # Permite a Pydantic leer datos desde modelos SQLAlchemy
+
+class StatusUpdate(BaseModel):
+    """Schema para actualizar solo el estado de una transacción"""
+    status: TransactionStatus

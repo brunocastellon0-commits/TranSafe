@@ -3,8 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from app.schemas.transaccion_schema import TransactionStatus # Importamos el Enum de Pydantic
 
-Base = declarative_base()
-
+from app.database import Base
 class Transaction(Base):
     __tablename__ = "transactions"
 

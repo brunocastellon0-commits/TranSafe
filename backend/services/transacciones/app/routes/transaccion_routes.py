@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.schemas.transaccion_schema import TransactionBase,TransactionCreate,TransactionInDBBase,TransactionStatus
+from app.schemas.transaccion_schema import TransactionBase, TransactionCreate, TransactionInDBBase, TransactionStatus, StatusUpdate
 from app.services import transaccion_service
 from app.dependencies import get_db, get_publisher, get_current_user
 from app.dependencies import User # Importamos el Pydantic model 'User'
@@ -71,6 +71,37 @@ def create_transaction_endpoint(
             detail=f"Error interno al procesar la transacción."
         )
 
-# Aquí podrías agregar más endpoints si los necesitaras, por ejemplo:
-# @router.get("/", ...)
-# @router.get("/{transaction_id}", ...)
+
+@router.patch(
+    "/{transaction_id}/status",
+    response_model=TransactionInDBBase,
+    summary="Actualizar estado de una transacción (uso interno)"
+)
+def update_transaction_status_endpoint(
+    transaction_id: int,
+    status_update: StatusUpdate,  # ← CAMBIO: usa el schema StatusUpdate
+    db: Session = Depends(get_db)
+):
+    """
+    Endpoint interno para que el fraud_service actualice el estado
+    de una transacción después de analizarla.
+    
+    **Nota de Seguridad:** En producción, este endpoint debería estar
+    protegido (solo accesible desde la red interna o con autenticación
+    de servicio a servicio).
+    """
+    
+    # Buscar y actualizar la transacción
+    updated_transaction = transaccion_service.update_transaction_status(
+        db=db,
+        transaction_id=transaction_id,
+        new_status=status_update.status  # ← CAMBIO: accede al campo status
+    )
+    
+    if not updated_transaction:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Transacción {transaction_id} no encontrada"
+        )
+    
+    return updated_transaction
