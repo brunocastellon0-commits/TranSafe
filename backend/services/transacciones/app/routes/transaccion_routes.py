@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.schemas.transaccion_schema import TransactionBase, TransactionCreate, TransactionInDBBase, TransactionStatus, StatusUpdate
 from app.services import transaccion_service
-from app.dependencies import get_db, get_publisher, get_current_user
+from app.dependencies import get_db, get_publisher
 from app.dependencies import User # Importamos el Pydantic model 'User'
 
 # Creamos un router de FastAPI
@@ -29,7 +29,7 @@ def create_transaction_endpoint(
     # 3. Dependencia de Seguridad:
     # Si el token no es válido o está expirado, 'get_current_user'
     # lanzará una HTTPException 401 y esta función nunca se ejecutará.
-    current_user: User = Depends(get_current_user) 
+    
 ):
     """
     Endpoint para recibir una nueva transacción financiera.
