@@ -278,7 +278,6 @@
     transform: translate(-20px, 20px) scale(0.95);
   }
 }
-
 @keyframes float {
   0%, 100% {
     transform: translateY(0);

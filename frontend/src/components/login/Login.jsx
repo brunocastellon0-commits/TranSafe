@@ -8,15 +8,30 @@ export default function Login() {
   const [visible, setVisible] = useState(false);
   const [focus, setFocus] = useState(null);
   const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => setVisible(true), []);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    setError(""); // Limpiar error al escribir
+  };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    handleLogin(form);
+    setLoading(true);
+    setError("");
+    
+    try {
+      await handleLogin(form, navigate);
+    } catch (error) {
+      console.error('Error en login:', error);
+      setError(error.message || "Error al iniciar sesión");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const goToRegister = () => {
@@ -78,7 +93,21 @@ export default function Login() {
           <p className="subtitle">Inicia sesión para continuar</p>
         </div>
 
-        <div className="form-wrapper">
+        <form onSubmit={handleSubmit} className="form-wrapper">
+          {/* Error Message */}
+          {error && (
+            <div style={{
+              padding: '0.75rem',
+              backgroundColor: '#fee2e2',
+              color: '#dc2626',
+              borderRadius: '0.5rem',
+              fontSize: '0.875rem',
+              textAlign: 'center'
+            }}>
+              {error}
+            </div>
+          )}
+
           {/* Email */}
           <div className="input-group">
             <label className="label">Correo electrónico</label>
@@ -92,6 +121,7 @@ export default function Login() {
                 onBlur={() => setFocus(null)}
                 placeholder="tu@email.com"
                 required
+                disabled={loading}
                 className="input"
               />
               <div className={`glow ${focus === "email" ? "active" : ""}`} />
@@ -111,12 +141,14 @@ export default function Login() {
                 onBlur={() => setFocus(null)}
                 placeholder="••••••••"
                 required
+                disabled={loading}
                 className="input input-with-icon"
               />
               <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
                 className="eye-btn"
+                disabled={loading}
               >
                 {showPass ? (
                   <svg className="eye-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -134,14 +166,16 @@ export default function Login() {
           </div>
 
           {/* Button */}
-          <button type="button" onClick={handleSubmit} className="btn">
-            <span className="btn-text">Iniciar sesión</span>
+          <button type="submit" className="btn" disabled={loading}>
+            <span className="btn-text">
+              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+            </span>
             <div className="btn-bg" />
             <div className="btn-shine-wrapper">
               <div className="btn-shine" />
             </div>
           </button>
-        </div>
+        </form>
 
         <p className="footer">
           ¿No tienes una cuenta?{" "}

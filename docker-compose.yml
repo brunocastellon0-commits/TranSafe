@@ -1,6 +1,19 @@
-version: "3.8"
+#version: "3.8"
 
 services:
+  # --- 0. Frontend React ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "5173:5173"
+    # ✅ REMOVIDO: No sobreescribir la variable de entorno aquí
+    # La variable se toma del archivo .env del proyecto frontend
+    depends_on:
+      - gateway
+
   # --- 1. Bases de Datos ---
   auth-db:
     image: mysql:8.0
@@ -9,7 +22,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${AUTH_DB_ROOT_PASSWORD} 
       MYSQL_DATABASE: auth_transafe
     ports:
-      - "3308:3306" # Expones la BD para debugging, está bien
+      - "3308:3306"
     volumes:
       - auth-db-data:/var/lib/mysql
     healthcheck:
@@ -25,7 +38,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${TRANS_DB_ROOT_PASSWORD}
       MYSQL_DATABASE: transaccion_transafe
     ports:
-      - "3307:3306" # Expones la BD para debugging, está bien
+      - "3307:3306"
     volumes:
       - trans-db-data:/var/lib/mysql
     healthcheck:
@@ -36,42 +49,38 @@ services:
 
   # --- 2. Broker de Mensajería ---
   rabbitmq:
-      image: rabbitmq:3-management
-      container_name: rabbitmq
-      ports:
-        - "5672:5672"
-        - "15672:15672"
-      healthcheck:
-        # CAMBIO: Usamos 'rabbitmq-diagnostics check_port_connectivity'
-        # Esto SÍ garantiza que el puerto de conexión está listo.
-        test: rabbitmq-diagnostics -q check_port_connectivity
-        interval: 10s
-        timeout: 5s
-        retries: 10 # Le damos más reintentos
-        start_period: 20s # Le damos 20s para que arranque antes de chequear
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q check_port_connectivity
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   # --- 3. Microservicios de Backend ---
   
   # ===============================================
-  # === ¡NUEVO SERVICIO! - API GATEWAY ===
+  # === API GATEWAY ===
   # ===============================================
   gateway:
     build:
-      # Asumimos que pones el gateway en esta ruta
       context: ./backend/services/gateway
       dockerfile: DockerFile
     container_name: gateway_service
     ports:
-      # Este es AHORA el ÚNICO punto de entrada a tu API
-      - "80:7000" 
+      - "80:7000"
+    environment:
+      # ✅ CORREGIDO: Permitir CORS desde el host (tu máquina)
+      - CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
     depends_on:
-      # El Gateway no puede arrancar hasta que los servicios
-      # que llama estén listos
       auth_service:
         condition: service_started
       transactions_service:
         condition: service_started
-  # ===============================================
 
   auth_service:
     build:
@@ -83,10 +92,6 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - AUTH_DB_ROOT_PASSWORD=${AUTH_DB_ROOT_PASSWORD}
-    # ¡PUERTO ELIMINADO!
-    # 'ports: - "8000:8000"' <--- Se elimina
-    # Ahora solo el Gateway accede a este servicio
-    # internamente en el puerto 8000 (que expone el Dockerfile)
     depends_on:
       auth-db:
         condition: service_healthy
@@ -101,10 +106,6 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - TRANS_DB_ROOT_PASSWORD=${TRANS_DB_ROOT_PASSWORD}
-    # ¡PUERTO ELIMINADO!
-    # 'ports: - "8001:8001"' <--- Se elimina
-    # Ahora solo el Gateway (y el fraud_service) acceden
-    # a este servicio internamente.
     volumes:
       - ./backend/services/transacciones:/app
     depends_on:

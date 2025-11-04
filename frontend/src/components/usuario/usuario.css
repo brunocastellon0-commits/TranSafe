@@ -194,7 +194,7 @@
   opacity: 0.3;
 }
 
-/* Button */
+/* Button - ARREGLADO: pointer-events en elementos internos */
 .btn {
   position: relative;
   width: 100%;
@@ -211,7 +211,12 @@
   margin-top: 0.5rem;
 }
 
-.btn:hover {
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn:not(:disabled):hover {
   box-shadow: 0 20px 25px -5px rgba(30, 58, 138, 0.5);
   transform: scale(1.05);
 }
@@ -219,6 +224,7 @@
 .btn-text {
   position: relative;
   z-index: 10;
+  pointer-events: none; /* CRÍTICO: No bloquear clicks */
 }
 
 .btn-bg {
@@ -227,6 +233,7 @@
   background: linear-gradient(to right, #0f172a, #172554);
   opacity: 0;
   transition: opacity 0.3s;
+  pointer-events: none; /* CRÍTICO: No bloquear clicks */
 }
 
 .btn:hover .btn-bg {
@@ -238,6 +245,7 @@
   inset: 0;
   opacity: 0;
   transition: opacity 0.3s;
+  pointer-events: none; /* CRÍTICO: No bloquear clicks */
 }
 
 .btn:hover .btn-shine-wrapper {
@@ -253,6 +261,7 @@
   background: rgba(255, 255, 255, 0.2);
   transform: skewX(-12deg) translateX(-100%);
   transition: transform 0.7s;
+  pointer-events: none; /* CRÍTICO: No bloquear clicks */
 }
 
 .btn:hover .btn-shine {
